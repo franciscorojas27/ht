@@ -2,8 +2,11 @@ package main
 
 import (
 	"fmt"
-	"gopkg.in/yaml.v3"
+	"net/http"
+	"net/http/httputil"
 	"os"
+
+	"gopkg.in/yaml.v3"
 )
 
 type HTRequest struct {
@@ -20,12 +23,33 @@ func main() {
 		fmt.Printf("Error reading YAML file: %v\n", err)
 		return
 	}
-	var req HTRequest
-	err = yaml.Unmarshal(data, &req)
+	var req1 HTRequest
+	err = yaml.Unmarshal(data, &req1)
 	if err != nil {
 		fmt.Printf("Error parsing YAML file: %v\n", err)
 		return
 	}
-	fmt.Printf("Parsed Request:\nMethod: %s\nURL: %s\nHeaders: %v\nBody: %s\n", req.Method, req.URL, req.Headers, req.Body)
 
+	req, _ := http.NewRequest(req1.Method, req1.URL, nil)
+	req.Header.Set("User-Agent", "Mozilla/5.0 (compatible; HT/1.0)")
+	dumpOut, err := httputil.DumpRequestOut(req, true)
+	if err != nil {
+		fmt.Printf("Error dumping request: %v\n", err)
+		return
+	}
+	fmt.Printf("Dumped Request:\n%s\n", dumpOut)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Printf("Error sending request: %v\n", err)
+		return
+	}
+	defer resp.Body.Close()
+	dumpIn, err := httputil.DumpResponse(resp, true)
+	if err != nil {
+		fmt.Printf("Error dumping response: %v\n", err)
+		return
+	}
+	fmt.Printf("Dumped Response:\n%s\n", dumpIn)
 }
