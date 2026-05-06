@@ -11,6 +11,7 @@ type HT struct {
 
 type HTConfig struct {
 	BaseURL string            `yaml:"base_url"`
+	Timeout int               `yaml:"timeout"`
 	Headers map[string]string `yaml:"headers"`
 }
 
