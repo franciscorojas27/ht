@@ -1,4 +1,4 @@
-package main
+package ht
 
 import (
 	"fmt"
@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-func parseEnvYML(data []byte, vars HTVars) []byte {
+func ParseEnv(data []byte, vars HTVars) []byte {
 	mapper := func(key string) string {
 		if val, ok := vars[key]; ok {
 			return fmt.Sprintf("%v", val)
@@ -18,7 +18,7 @@ func parseEnvYML(data []byte, vars HTVars) []byte {
 	return []byte(output)
 }
 
-func parseYML(data []byte) (HT, error) {
+func ParseYML(data []byte) (HT, error) {
 	var tempVars struct {
 		Vars HTVars `yaml:"vars"`
 	}
@@ -26,7 +26,7 @@ func parseYML(data []byte) (HT, error) {
 	yaml.Unmarshal(data, &tempVars)
 
 	if tempVars.Vars != nil {
-		data = parseEnvYML(data, tempVars.Vars)
+		data = ParseEnv(data, tempVars.Vars)
 	}
 
 	var requests HT

@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"ht/internal/ht"
+	"ht/internal/ui"
 	"io"
 	"net/http"
 	"net/http/httputil"
@@ -15,7 +17,7 @@ import (
 
 func main() {
 
-	yml, ls, name := InitConfig()
+	yml, ls, name := ui.InitFlags()
 
 	data, err := os.ReadFile(yml)
 	if err != nil {
@@ -23,45 +25,24 @@ func main() {
 		return
 	}
 
-	requests, err := parseYML(data)
+	requests, err := ht.ParseYML(data)
 	if err != nil {
 		fmt.Printf("Error parsing YAML file: %v\n", err)
 		return
 	}
 
 	if ls {
-		if yml == "" {
-			fmt.Println("Please provide a YAML file using the -yml flag.")
-			return
-		}
 		requests.ListRequests()
 		return
 	}
 
-	var req HTRequest
-	if name != "" {
-		found := false
-		for _, r := range requests.Requests {
-			if r.Name == name {
-				req = r
-				found = true
-				break
-			}
-		}
-		if !found {
-			fmt.Printf("Request with name '%s' not found.\n", name)
-			return
-		}
-	} else {
-		if len(requests.Requests) == 0 {
-			fmt.Println("No requests found in the YAML file.")
-			return
-		}
-		req = requests.Requests[0]
+	targetReq, found := requests.FindRequest(name)
+	if !found {
+		return
 	}
 
 	if requests.Config.BaseURL != "" {
-		req.URL = requests.Config.BaseURL + req.URL
+		targetReq.URL = requests.Config.BaseURL + targetReq.URL
 	}
 
 	var timeout time.Duration
@@ -70,19 +51,25 @@ func main() {
 	} else {
 		timeout = 30 * time.Second
 	}
-
+	
+	bodyReader, contentType, err := targetReq.PrepareBody()
+	if err != nil {
+		fmt.Printf("Error preparing request body: %v\n", err)
+		return
+	}
+	
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	reqClient, err := http.NewRequestWithContext(ctx, req.Method, req.URL, nil)
+	reqClient, err := http.NewRequestWithContext(ctx, targetReq.Method, targetReq.URL, bodyReader)
 
 	if err != nil {
 		fmt.Printf("Error creating request: %v\n", err)
 		return
 	}
 
-	LoadHeaders(reqClient, requests.Config.Headers)
-	LoadHeaders(reqClient, req.Headers)
+	ht.LoadHeaders(reqClient, requests.Config.Headers)
+	ht.LoadHeaders(reqClient, targetReq.Headers)
 
 	client := &http.Client{}
 	timeInit := time.Now()
@@ -93,16 +80,14 @@ func main() {
 	}
 	defer resp.Body.Close()
 
-	contentType := resp.Header.Get("Content-Type")
-
 	dumpHeaders, err := httputil.DumpResponse(resp, false)
 	if err != nil {
 		fmt.Printf("Error dumping response: %v\n", err)
 		return
 	}
 
-	color.Blue("HT [%s] %s", req.Method, req.URL)
-	TimeTaken(timeInit)
+	color.Blue("HT [%s] %s", targetReq.Method, targetReq.URL)
+	ui.TimeTaken(timeInit)
 	fmt.Printf("%s", dumpHeaders)
 
 	bodyBytes, err := io.ReadAll(resp.Body)
@@ -112,7 +97,7 @@ func main() {
 	}
 
 	if strings.Contains(contentType, "application/json") {
-		formattedJSON, err := FormatJSON(bodyBytes)
+		formattedJSON, err := ui.FormatJSON(bodyBytes)
 		if err != nil {
 			fmt.Printf("Error formatting JSON: %v\n", err)
 			return
