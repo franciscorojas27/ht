@@ -2,12 +2,12 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"ht/internal/ht"
+	"ht/internal/runner"
 	"ht/internal/ui"
-	"io"
 	"net/http"
-	"net/http/httputil"
 	"os"
 	"strings"
 	"time"
@@ -17,7 +17,7 @@ import (
 
 func main() {
 
-	yml, ls, name := ui.InitFlags()
+	yml, ls, name, dryRun, verbose := ui.InitFlags()
 
 	data, err := os.ReadFile(yml)
 	if err != nil {
@@ -30,7 +30,6 @@ func main() {
 		fmt.Printf("Error parsing YAML file: %v\n", err)
 		return
 	}
-
 	if ls {
 		requests.ListRequests()
 		return
@@ -51,13 +50,13 @@ func main() {
 	} else {
 		timeout = 30 * time.Second
 	}
-	
-	bodyReader, contentType, err := targetReq.PrepareBody()
+
+	bodyReader, _, err := targetReq.PrepareBody()
 	if err != nil {
 		fmt.Printf("Error preparing request body: %v\n", err)
 		return
 	}
-	
+
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
@@ -71,38 +70,68 @@ func main() {
 	ht.LoadHeaders(reqClient, requests.Config.Headers)
 	ht.LoadHeaders(reqClient, targetReq.Headers)
 
-	client := &http.Client{}
-	timeInit := time.Now()
-	resp, err := client.Do(reqClient)
+	if dryRun {
+		ui.DryRun(reqClient)
+		return
+	}
+	InitTime := time.Now()
+
+	res, err := runner.DoRequest(reqClient, InitTime, verbose)
 	if err != nil {
 		fmt.Printf("Error sending request: %v\n", err)
 		return
 	}
-	defer resp.Body.Close()
+	finalTime := res.FinalTime
 
-	dumpHeaders, err := httputil.DumpResponse(resp, false)
-	if err != nil {
-		fmt.Printf("Error dumping response: %v\n", err)
-		return
-	}
+	dnsDur := res.DNSDur
+	connDur := res.ConnDur
+	tlsDur := res.TLSDur
+	firstByteDur := res.FirstByte
+	tlsVersion := res.TLSVersion
+	sawTLS := res.SawTLS
+
+	dumpHeaders := res.DumpHeaders
 
 	color.Blue("HT [%s] %s", targetReq.Method, targetReq.URL)
-	ui.TimeTaken(timeInit)
-	fmt.Printf("%s", dumpHeaders)
-
-	bodyBytes, err := io.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Printf("Error reading response body: %v\n", err)
-		return
+	ui.TimeTaken(finalTime)
+	if verbose {
+		f := func(d time.Duration) string {
+			if d == 0 {
+				return "-"
+			}
+			return fmt.Sprintf("%.2fms", float64(d)/float64(time.Millisecond))
+		}
+		tlsVerStr := "-"
+		switch tlsVersion {
+		case tls.VersionTLS13:
+			tlsVerStr = "v1.3"
+		case tls.VersionTLS12:
+			tlsVerStr = "v1.2"
+		case tls.VersionTLS11:
+			tlsVerStr = "v1.1"
+		case tls.VersionTLS10:
+			tlsVerStr = "v1.0"
+		}
+		fmt.Printf("◌ DNS Lookup      : %s\n", f(dnsDur))
+		fmt.Printf("◌ TCP Connection  : %s\n", f(connDur))
+		if sawTLS {
+			fmt.Printf("◌ TLS Handshake   : %s (%s)\n", f(tlsDur), tlsVerStr)
+		} else {
+			fmt.Printf("◌ TLS Handshake   : -\n")
+		}
+		fmt.Printf("◌ First Byte      : %s\n", f(firstByteDur))
+		fmt.Println(strings.Repeat("─", 35))
 	}
-
-	if strings.Contains(contentType, "application/json") {
+	fmt.Printf("%s", dumpHeaders)
+	fmt.Println(strings.Repeat("-", 35))
+	bodyBytes := res.Body
+	if strings.Contains(res.Headers.Get("Content-Type"), "application/json") {
 		formattedJSON, err := ui.FormatJSON(bodyBytes)
 		if err != nil {
 			fmt.Printf("Error formatting JSON: %v\n", err)
 			return
 		}
-		fmt.Println(formattedJSON)
+		fmt.Printf("%s\n", formattedJSON)
 	} else {
 		fmt.Printf("%s", bodyBytes)
 	}
