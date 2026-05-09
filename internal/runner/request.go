@@ -21,13 +21,15 @@ type RequestResult struct {
 	StatusCode  int
 }
 
-func DoRequest(req *http.Request, initTime time.Time, verbose bool) (*RequestResult, error) {
+func DoRequest(req *http.Request, initTime time.Time, verbose bool, client *http.Client) (*RequestResult, error) {
 	var traceFunc func() (time.Duration, time.Duration, time.Duration, time.Duration, uint16, bool)
 	if verbose {
 		req, traceFunc = WithTrace(req, initTime)
 	}
 
-	client := &http.Client{}
+	if client == nil {
+		client = &http.Client{}
+	}
 	resp, err := client.Do(req)
 	finalTime := time.Since(initTime)
 	if err != nil {
