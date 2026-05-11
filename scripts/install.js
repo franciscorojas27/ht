@@ -4,7 +4,7 @@ const https = require('https');
 const path = require('path');
 
 
-const version = "0.1.2";
+const version = "0.1.3";
 const repo = "franciscorojas27/ht";
 
 const platform = os.platform() === 'win32' ? 'windows' : os.platform();
