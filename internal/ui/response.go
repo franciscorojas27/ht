@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/franciscorojas27/HT/internal/runner"
+	"github.com/franciscorojas27/ht/internal/runner"
 
 	"github.com/fatih/color"
 )

@@ -8,8 +8,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/franciscorojas27/HT/internal/ht"
-	"github.com/franciscorojas27/HT/internal/ui"
+	"github.com/franciscorojas27/ht/internal/ht"
+	"github.com/franciscorojas27/ht/internal/ui"
 
 	"github.com/spf13/cobra"
 )

@@ -28,7 +28,7 @@ HT is a command-line HTTP client built for quick testing, debugging, and reprodu
 
 ```bash
 # install with Go
-go install github.com/franciscorojas27/HT/cmd/ht@latest
+go install github.com/franciscorojas27/ht/cmd/ht@latest
 ```
 
 ```bash

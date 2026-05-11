@@ -3,7 +3,7 @@ package cmd
 import (
 	"testing"
 
-	"github.com/franciscorojas27/HT/internal/ui"
+	"github.com/franciscorojas27/ht/internal/ui"
 
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/require"

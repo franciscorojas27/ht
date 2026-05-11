@@ -1,44 +1,47 @@
-const fs = require('fs');
-const path = require('path');
-const https = require('https');
 const os = require('os');
+const fs = require('fs');
+const https = require('https');
+const path = require('path');
 
-const REPO = "franciscorojas27/HT";
-const VERSION = require('../package.json').version;
+const version = "0.1.2";
+const repo = "franciscorojas27/ht";
 
-const platformMap = { win32: "windows", darwin: "darwin", linux: "linux" };
-const archMap = { x64: "amd64", arm64: "arm64" };
+const platform = os.platform() === 'win32' ? 'windows' : os.platform();
+const arch = os.arch() === 'x64' ? 'amd64' : (os.arch() === 'arm64' ? 'arm64' : '386');
+const extension = platform === 'windows' ? 'zip' : 'tar.gz';
 
-const platform = platformMap[os.platform()];
-const arch = archMap[os.arch()];
+const filename = `ht_${version}_${platform}_${arch}.${extension}`;
+const url = `https://github.com/${repo}/releases/download/v${version}/${filename}`;
 
-if (!platform || !arch) {
-  console.error(`Plataforma no soportada: ${os.platform()} ${os.arch()}`);
-  process.exit(1);
-}
+const binDir = path.join(__dirname, '../bin');
+if (!fs.existsSync(binDir)) fs.mkdirSync(binDir);
 
-const exe = platform === "windows" ? "ht.exe" : "ht";
-const url = `https://github.com/${REPO}/releases/download/v${VERSION}/ht-${platform}-${arch}.zip`;
-const dest = path.join(__dirname, '../bin', exe);
+const dest = path.join(binDir, platform === 'windows' ? 'ht.exe' : 'ht');
 
-function download(url, dest) {
-  https.get(url, (res) => {
-    if (res.statusCode === 302 || res.statusCode === 301) {
-      return download(res.headers.location, dest);
-    }
-    if (res.statusCode !== 200) {
-      console.error(`Error al descargar: ${res.statusCode}`);
-      process.exit(1);
-    }
-    const file = fs.createWriteStream(dest);
-    res.pipe(file);
-    file.on('finish', () => {
-      file.close();
-      if (process.platform !== "win32") fs.chmodSync(dest, 0o755);
-      console.log("ht instalado correctamente.");
+console.log(`Descargando ht v${version} desde: ${url}`);
+
+const download = (url, dest) => {
+    https.get(url, (res) => {
+        if (res.statusCode === 302 || res.statusCode === 301) {
+            download(res.headers.location, dest);
+            return;
+        }
+        if (res.statusCode !== 200) {
+            console.error(`Error: Servidor respondió con ${res.statusCode}`);
+            process.exit(1);
+        }
+
+        const file = fs.createWriteStream(dest);
+        res.pipe(file);
+        file.on('finish', () => {
+            file.close();
+            if (platform !== 'windows') fs.chmodSync(dest, 0o755);
+            console.log('Instalación completada.');
+        });
+    }).on('error', (err) => {
+        console.error(`Error de red: ${err.message}`);
+        process.exit(1);
     });
-  });
-}
+};
 
-console.log(`Descargando ht v${VERSION} para ${platform}-${arch}...`);
 download(url, dest);

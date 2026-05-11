@@ -1,4 +1,4 @@
-module github.com/franciscorojas27/HT
+module github.com/franciscorojas27/ht
 
 go 1.25.0
 

@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/franciscorojas27/HT/internal/ui"
+	"github.com/franciscorojas27/ht/internal/ui"
 
 	"github.com/fatih/color"
 	"github.com/stretchr/testify/require"
