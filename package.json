@@ -1,6 +1,6 @@
 {
     "name": "@franciscorojas27/ht",
-    "version": "0.1.3",
+    "version": "0.1.5",
     "description": "HT command-line HTTP client",
     "license": "MIT",
     "repository": {
