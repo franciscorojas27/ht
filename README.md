@@ -32,11 +32,6 @@ go install github.com/franciscorojas27/ht/cmd/ht@latest
 ```
 
 ```bash
-# install with npm
-npm install -g @franciscorojas/ht
-```
-
-```bash
 # or build locally
 go build -o ht ./cmd/ht
 ```
