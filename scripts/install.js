@@ -2,9 +2,10 @@ const os = require('os');
 const fs = require('fs');
 const https = require('https');
 const path = require('path');
+const pkg = require('../package.json');
 
 
-const version = "0.1.6";
+const version = pkg.version;
 const repo = "franciscorojas27/ht";
 
 const platform = os.platform() === 'win32' ? 'windows' : os.platform();
