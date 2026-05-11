@@ -3,9 +3,10 @@ package ui
 import (
 	"crypto/tls"
 	"fmt"
-	"ht/internal/runner"
 	"strings"
 	"time"
+
+	"github.com/franciscorojas27/HT/internal/runner"
 
 	"github.com/fatih/color"
 )

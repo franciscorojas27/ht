@@ -1,0 +1,49 @@
+name: release
+
+on:
+    push:
+        tags:
+            - "v*" # Es mejor disparar por tags para controlar las versiones reales
+
+permissions:
+    contents: write
+
+jobs:
+    release:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+
+            - name: Setup Go
+              uses: actions/setup-go@v5
+              with:
+                  go-version-file: go.mod
+                  cache: true
+
+            - name: Run GoReleaser
+              uses: goreleaser/goreleaser-action@v5
+              with:
+                  distribution: goreleaser
+                  version: latest
+                  args: release --clean
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Setup Node
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "20"
+                  registry-url: "https://registry.npmjs.org"
+
+            - name: Publish to NPM
+              if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
+              run: |
+                  # Sincronizamos la versión del package.json con el tag de git
+                  CURRENT_TAG=${GITHUB_REF#refs/tags/v}
+                  npm version "${CURRENT_TAG}" --no-git-tag-version
+                  npm publish --access public
+              env:
+                  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

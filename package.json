@@ -1,0 +1,28 @@
+{
+  "name": "@franciscorojas27/ht",
+  "version": "0.1.0",
+  "description": "HT command-line HTTP client",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/franciscorojas27/HT.git"
+  },
+  "bin": {
+    "ht": "bin/ht.js"
+  },
+  "scripts": {
+    "postinstall": "node scripts/install.js"
+  },
+  "files": [
+    "bin/ht.js",
+    "scripts/install.js",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

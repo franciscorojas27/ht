@@ -1,16 +1,11 @@
 package main
 
-import (
-	"fmt"
-	"ht/internal/ht"
-	"ht/internal/ui"
-	"os"
-)
+/*
+Copyright © 2026 NAME HERE <franciscoantonior30@gmail.com>
+
+*/
+import "github.com/franciscorojas27/HT/cmd"
 
 func main() {
-	flags := ui.InitFlags()
-	if err := ht.Run(flags); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
+	cmd.Execute()
 }

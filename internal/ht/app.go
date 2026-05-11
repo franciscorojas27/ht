@@ -4,12 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"ht/internal/runner"
-	"ht/internal/ui"
 	"net/http"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/franciscorojas27/HT/internal/runner"
+	"github.com/franciscorojas27/HT/internal/ui"
 )
 
 type basicAuth struct {
@@ -53,19 +54,6 @@ func shouldUseQuick(flags ui.Flags) bool {
 }
 
 func runQuick(flags ui.Flags) error {
-	if flags.LS {
-		return fmt.Errorf("-ls requires -yml")
-	}
-	if flags.URL == "" {
-		return fmt.Errorf("missing -url for quick request")
-	}
-	if flags.Method != "" && flags.HeadOnly {
-		return fmt.Errorf("-I cannot be combined with -X")
-	}
-	if flags.HeadOnly && flags.Data != "" {
-		return fmt.Errorf("-I cannot be combined with -d")
-	}
-
 	headers, err := parseHeaderLines(flags.Headers)
 	if err != nil {
 		return err
@@ -80,10 +68,7 @@ func runQuick(flags ui.Flags) error {
 
 	var auth *basicAuth
 	if flags.User != "" {
-		user, pass, ok := strings.Cut(flags.User, ":")
-		if !ok || user == "" {
-			return fmt.Errorf("invalid -u value, expected user:pass")
-		}
+		user, pass, _ := strings.Cut(flags.User, ":")
 		auth = &basicAuth{User: user, Pass: pass}
 	}
 
@@ -101,9 +86,6 @@ func runQuick(flags ui.Flags) error {
 }
 
 func loadYAMLRequest(flags ui.Flags) (HT, HTRequest, time.Duration, error) {
-	if flags.YML == "" {
-		return HT{}, HTRequest{}, 0, fmt.Errorf("missing -yml")
-	}
 	data, err := os.ReadFile(flags.YML)
 	if err != nil {
 		return HT{}, HTRequest{}, 0, fmt.Errorf("error reading YAML file: %w", err)
