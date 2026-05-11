@@ -1,56 +1,54 @@
 name: release
 
 on:
-  push:
-    tags:
-      - 'v*'
+    push:
+        tags:
+            - "v*"
 
 permissions:
-  contents: write
+    contents: write
 
 jobs:
-  goreleaser:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 
+    goreleaser:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
 
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: go.mod
-          cache: true
+            - name: Setup Go
+              uses: actions/setup-go@v5
+              with:
+                  go-version-file: go.mod
+                  cache: true
 
-      - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v6
-        with:
-          distribution: goreleaser
-          version: latest
-          args: release --clean
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            - name: Run GoReleaser
+              uses: goreleaser/goreleaser-action@v6
+              with:
+                  distribution: goreleaser
+                  version: latest
+                  args: release --clean
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  npm-publish:
-    needs: goreleaser 
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+    npm-publish:
+        needs: goreleaser
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "24"
-          registry-url: "https://registry.npmjs.org"
+            - name: Setup Node
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "24"
+                  registry-url: "https://registry.npmjs.org"
 
-      - name: Publish to NPM
-        run: |
-          # Extraer la versión del tag (ej: v0.1.0 -> 0.1.0)
-          VERSION=${GITHUB_REF#refs/tags/v}
-          # Actualizar package.json en caliente antes de publicar
-          npm version $VERSION --no-git-tag-version
-          npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+            - name: Publish to NPM
+              run: |
+                  VERSION=${GITHUB_REF#refs/tags/v}
+                  npm version $VERSION --no-git-tag-version --allow-same-version
+                  npm publish --access public
+              env:
+                  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
