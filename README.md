@@ -33,7 +33,7 @@ go install github.com/franciscorojas27/ht/cmd/ht@latest
 
 ```bash
 # install with npm
-npm install -g @franciscorojas27/ht
+npm install -g @franciscorojas/ht
 ```
 
 ```bash
