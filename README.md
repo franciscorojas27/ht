@@ -28,12 +28,12 @@ HT is a command-line HTTP client built for quick testing, debugging, and reprodu
 
 ```bash
 # install with Go
-go install github.com/franciscorojas27/ht/cmd/ht@latest
+go install github.com/franciscorojas27/ht@latest
 ```
 
 ```bash
 # or build locally
-go build -o ht ./cmd/ht
+go build -o ht .
 ```
 
 **Quick mode (cURL-like)**
